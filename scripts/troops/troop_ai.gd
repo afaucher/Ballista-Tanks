@@ -10,7 +10,7 @@ extends Node
 
 enum State { MARCH, SCATTER, CHEER }
 
-const SPACING := 1.1          # m between squad mates
+const SPACING := 1.5          # m between squad mates
 const ARRIVE := 4.0           # the squad's centre this close to the goal: it cheers
 const WAYPOINT := 0.8        # close enough to a path point to head for the next (corners hug piers)
 const REPATH := 3.0           # s between a troop's path updates (scattering moves it around)
@@ -171,7 +171,7 @@ static func bake_nav(root: Node3D) -> NavigationRegion3D:
 	nm.cell_size = NAV_CELL
 	nm.cell_height = 0.2
 	nm.agent_radius = 0.6
-	nm.agent_height = 1.2
+	nm.agent_height = 1.6
 	nm.agent_max_climb = 0.4
 	nm.agent_max_slope = 35.0
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS

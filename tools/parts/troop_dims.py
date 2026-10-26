@@ -3,11 +3,16 @@ x right (the troop's right), y up, -z forward, standing rest pose. The single so
 the troop_*.py part scripts build to these numbers, and build.py (`build.ps1 troop`) writes
 assets/troop/dims.json for the game.
 
-About 2.5 heads tall (1.1 m to the helmet top): a bucket helmet as big as the torso, stubby legs,
-short arms hanging a little out from the sides, a spear upright in the right mitten, a round
-shield on the left, after
+About 2.5 heads tall: a bucket helmet as big as the torso, stubby legs, short arms hanging a
+little out from the sides, a spear upright in the right mitten, a round shield on the left, after
 docs/design/troops.md. Right-side joints are given; the left side is the mirror (x -> -x).
+
+The numbers below are the model's; the built troop is SCALE times bigger, so its helmet is the
+tank driver's size (dims.HELMET_R): 1.51 m to the helmet top. troop_common.piece() scales each
+finished shape, and game_dims() writes scaled numbers (masses by SCALE cubed).
 """
+
+SCALE = 0.31 / 0.22       # the knight's helmet radius over the model's
 
 GROUND_Y = -0.34          # boot soles
 
@@ -98,11 +103,11 @@ def game_dims():
         parent = all_pieces[p["parent"]]["joint"] if p["parent"] else (0, GROUND_Y, 0)
         ps[name] = {
             "parent": p["parent"],
-            "joint": r([p["joint"][i] - parent[i] for i in range(3)]),
-            "rest": r(p["joint"]),
-            "box": r(p["size"]),
-            "center": r(p["centre"]),
-            "mass": p["mass"],
+            "joint": r([(p["joint"][i] - parent[i]) * SCALE for i in range(3)]),
+            "rest": r([x * SCALE for x in p["joint"]]),
+            "box": r([x * SCALE for x in p["size"]]),
+            "center": r([x * SCALE for x in p["centre"]]),
+            "mass": round(p["mass"] * SCALE ** 3, 3),
         }
     return {
         "_doc": "Troop pieces: assets/troop/<name>.glb, origin at the joint, +Y up, -Z forward, metres. "
@@ -110,8 +115,8 @@ def game_dims():
                 "rest: the origin in the standing rest pose relative to the pelvis origin (the hip centre); "
                 "box, center: rough collision box size and centre, relative to the piece's origin; mass in kg. "
                 "Surfaces with material \"team\" take the team colour.",
-        "ground_y": GROUND_Y,
-        "height": round(HELMET_Y[1] - GROUND_Y, 3),
+        "ground_y": round(GROUND_Y * SCALE, 4),
+        "height": round((HELMET_Y[1] - GROUND_Y) * SCALE, 3),
         "team_material": "team",
         "pieces": ps,
     }

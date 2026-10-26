@@ -1,13 +1,16 @@
 """Helpers shared by the troop part scripts (troop_*.py). Pieces are modelled in troop space
-(troop_dims: origin at the pelvis) and moved so their origin sits on their joint.
+(troop_dims: origin at the pelvis, the model's size), moved so their origin sits on their joint
+and scaled up by troop_dims.SCALE.
 
 A troop module exposes PIECES = {piece name: build function}; `build.ps1 troop` exports each to
 assets/troop/<name>.glb.
 """
 
+import bpy
 from mathutils import Matrix, Vector
 
 import common
+import troop_dims
 
 
 def limb(mb, a, b, profile, segments=16):
@@ -21,9 +24,12 @@ def limb(mb, a, b, profile, segments=16):
 
 
 def piece(objs, name, origin, texture_size=256):
-    """Move the troop-space objects so `origin` is at (0, 0, 0), then finish (join, smooth, UV,
-    bake)."""
-    shift = Matrix.Translation(-common.to_blender(origin))
+    """Move the troop-space objects so `origin` is at (0, 0, 0) and scale them up to the game's size
+    (troop_dims.SCALE, bevels included), then finish (join, smooth, UV, bake)."""
+    xf = Matrix.Scale(troop_dims.SCALE, 4) @ Matrix.Translation(-common.to_blender(origin))
     for o in objs:
-        o.data.transform(shift)
+        bpy.context.view_layer.objects.active = o
+        for mod in list(o.modifiers):
+            bpy.ops.object.modifier_apply(modifier=mod.name)
+        o.data.transform(xf)
     return common.finish(objs, name, texture_size=texture_size)

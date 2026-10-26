@@ -15,7 +15,7 @@ const PINNED_FADE := 30.0
 const FADE_TIME := 1.5
 const SHOVE_COOLDOWN := 0.4
 const SLACK_DEG := 3.0     # projection leaves joints this far past a limit to the physics
-const SLACK_M := 0.03
+const SLACK_M := 0.04
 
 ## Joint limits (degrees), per axis of the troop's rest frame, child off parent: x pitches (a
 ## hanging limb swings forward, an upright piece tips back), y twists about the bone, z rolls
@@ -101,7 +101,7 @@ static func from_troop(t: Troop, impulse: Vector3, at := Vector3.INF) -> TroopRa
 		rag._join(p)
 	# The whole body moves off as one: the hit's velocity plus a tumble about the point it hit
 	# (pieces flung apart would fight their joints).
-	var com := t.global_position + Vector3.UP * 0.6
+	var com := t.global_position + Vector3.UP * 0.85
 	var hit_at := com if at == Vector3.INF else at
 	var spin := (hit_at - com).cross(impulse) * 3.0
 	if spin.length() < 1.0:
@@ -162,7 +162,7 @@ func limit_errors() -> Dictionary:
 
 ## The first piece a line from `from` along unit `dir` passes through within `reach` metres (a
 ## bolt's path); the piece nearest to `from` if it misses them all.
-func pierced_piece(from: Vector3, dir: Vector3, reach := 1.2) -> String:
+func pierced_piece(from: Vector3, dir: Vector3, reach := 1.7) -> String:
 	var best := ""
 	var best_t := reach
 	for p: String in bodies:

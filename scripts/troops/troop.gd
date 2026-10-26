@@ -14,8 +14,8 @@ signal died(troop: Troop, ragdoll: TroopRagdoll)
 
 const PART_DIR := "res://assets/troop/"
 const LAYER := 4                # alive troops; bolts hit them, tanks and other troops don't collide
-const RADIUS := 0.25
-const HEIGHT := 1.1
+const RADIUS := 0.35            # the helmet is the tank driver's size (assets/troop/dims.json)
+const HEIGHT := 1.55
 const RUN_SPEED := 3.6
 const ACCEL := 14.0
 const TURN_RATE := 9.0          # rad/s the facing turns toward the way it runs
@@ -27,20 +27,20 @@ const RUN_OVER_POP := 5.0
 
 ## Piece -> parent, joint (in the parent's space), collision box size and centre (piece space), mass.
 const DEFAULTS := {
-	"pelvis": {"parent": "", "joint": [0, 0.36, 0], "box": [0.26, 0.12, 0.16], "center": [0, 0.03, 0], "mass": 1.5},
-	"torso": {"parent": "pelvis", "joint": [0, 0.07, 0], "box": [0.28, 0.24, 0.18], "center": [0, 0.12, 0], "mass": 2.5},
-	"head": {"parent": "torso", "joint": [0, 0.24, 0], "box": [0.38, 0.40, 0.38], "center": [0, 0.21, 0], "mass": 2.6},
-	"plume": {"parent": "head", "joint": [0, 0.41, 0], "box": [0.06, 0.12, 0.26], "center": [0, 0.06, 0.02], "mass": 0.05},
-	"upper_arm_l": {"parent": "torso", "joint": [-0.18, 0.20, 0], "box": [0.08, 0.17, 0.08], "center": [0, -0.085, 0], "mass": 0.6},
-	"forearm_l": {"parent": "upper_arm_l", "joint": [0, -0.17, 0], "box": [0.09, 0.17, 0.09], "center": [0, -0.085, 0], "mass": 0.5},
-	"upper_arm_r": {"parent": "torso", "joint": [0.18, 0.20, 0], "box": [0.08, 0.17, 0.08], "center": [0, -0.085, 0], "mass": 0.6},
-	"forearm_r": {"parent": "upper_arm_r", "joint": [0, -0.17, 0], "box": [0.09, 0.17, 0.09], "center": [0, -0.085, 0], "mass": 0.5},
-	"thigh_l": {"parent": "pelvis", "joint": [-0.08, 0, 0], "box": [0.11, 0.17, 0.11], "center": [0, -0.085, 0], "mass": 0.9},
-	"shin_l": {"parent": "thigh_l", "joint": [0, -0.17, 0], "box": [0.11, 0.19, 0.13], "center": [0, -0.095, -0.015], "mass": 0.8},
-	"thigh_r": {"parent": "pelvis", "joint": [0.08, 0, 0], "box": [0.11, 0.17, 0.11], "center": [0, -0.085, 0], "mass": 0.9},
-	"shin_r": {"parent": "thigh_r", "joint": [0, -0.17, 0], "box": [0.11, 0.19, 0.13], "center": [0, -0.095, -0.015], "mass": 0.8},
-	"shield": {"parent": "forearm_l", "joint": [-0.07, -0.09, 0], "box": [0.04, 0.26, 0.22], "center": [0, 0, 0], "mass": 0.5},
-	"spear": {"parent": "forearm_r", "joint": [0, -0.13, 0], "box": [0.03, 1.3, 0.03], "center": [0, 0.33, 0], "mass": 0.5},
+	"pelvis": {"parent": "", "joint": [0, 0.507, 0], "box": [0.366, 0.169, 0.225], "center": [0, 0.042, 0], "mass": 4.2},
+	"torso": {"parent": "pelvis", "joint": [0, 0.099, 0], "box": [0.395, 0.338, 0.254], "center": [0, 0.169, 0], "mass": 6.99},
+	"head": {"parent": "torso", "joint": [0, 0.338, 0], "box": [0.535, 0.564, 0.535], "center": [0, 0.296, 0], "mass": 7.27},
+	"plume": {"parent": "head", "joint": [0, 0.578, 0], "box": [0.085, 0.169, 0.366], "center": [0, 0.085, 0.028], "mass": 0.14},
+	"upper_arm_l": {"parent": "torso", "joint": [-0.254, 0.282, 0], "box": [0.113, 0.24, 0.113], "center": [0, -0.12, 0], "mass": 1.68},
+	"forearm_l": {"parent": "upper_arm_l", "joint": [0, -0.24, 0], "box": [0.127, 0.24, 0.127], "center": [0, -0.12, 0], "mass": 1.4},
+	"upper_arm_r": {"parent": "torso", "joint": [0.254, 0.282, 0], "box": [0.113, 0.24, 0.113], "center": [0, -0.12, 0], "mass": 1.68},
+	"forearm_r": {"parent": "upper_arm_r", "joint": [0, -0.24, 0], "box": [0.127, 0.24, 0.127], "center": [0, -0.12, 0], "mass": 1.4},
+	"thigh_l": {"parent": "pelvis", "joint": [-0.113, 0, 0], "box": [0.155, 0.24, 0.155], "center": [0, -0.12, 0], "mass": 2.52},
+	"shin_l": {"parent": "thigh_l", "joint": [0, -0.24, 0], "box": [0.155, 0.268, 0.183], "center": [0, -0.134, -0.021], "mass": 2.24},
+	"thigh_r": {"parent": "pelvis", "joint": [0.113, 0, 0], "box": [0.155, 0.24, 0.155], "center": [0, -0.12, 0], "mass": 2.52},
+	"shin_r": {"parent": "thigh_r", "joint": [0, -0.24, 0], "box": [0.155, 0.268, 0.183], "center": [0, -0.134, -0.021], "mass": 2.24},
+	"shield": {"parent": "forearm_l", "joint": [-0.099, -0.127, 0], "box": [0.056, 0.366, 0.31], "center": [0, 0, 0], "mass": 1.4},
+	"spear": {"parent": "forearm_r", "joint": [0, -0.183, 0], "box": [0.042, 1.832, 0.042], "center": [0, 0.465, 0], "mass": 1.4},
 }
 ## Parents before children.
 const PIECES := ["pelvis", "torso", "head", "plume", "upper_arm_l", "forearm_l", "upper_arm_r", "forearm_r",
@@ -255,7 +255,7 @@ func _animate(dt: float, hv: Vector3, yaw_rate: float) -> void:
 	# Lean into turns (left turn, positive yaw rate: top to the left) and bob twice a stride.
 	_lean = lerpf(_lean, clampf(yaw_rate * speed * 0.05, -0.4, 0.4), 1.0 - exp(-10.0 * dt))
 	rig.rotation.z = _lean
-	rig.position.y = absf(sin(_phase)) * 0.05 * run
+	rig.position.y = absf(sin(_phase)) * 0.07 * run
 
 
 # --- Dying ------------------------------------------------------------------------------------
@@ -263,7 +263,7 @@ func _animate(dt: float, hv: Vector3, yaw_rate: float) -> void:
 ## Tanks driving through knock troops down with a shove; the tank doesn't notice.
 func _check_run_over() -> void:
 	for t: Tank in get_tree().get_nodes_in_group("tanks"):
-		var rel := global_position + Vector3.UP * 0.5 - t.global_position
+		var rel := global_position + Vector3.UP * 0.7 - t.global_position
 		var along := rel.dot(t.forward)
 		var side := rel - t.forward * along
 		var up := side.dot(t.up)
@@ -274,7 +274,7 @@ func _check_run_over() -> void:
 		if rv.length() < RUN_OVER_SPEED:
 			continue
 		var push := t.velocity * RUN_OVER_SHOVE + t.up * RUN_OVER_POP + side.normalized() * 2.0
-		die(push, global_position + Vector3.UP * 0.5)
+		die(push, global_position + Vector3.UP * 0.7)
 		return
 
 

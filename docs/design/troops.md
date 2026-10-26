@@ -4,7 +4,7 @@ Little soldiers running around the castle skatepark for both teams: something to
 to hit, and the funniest thing in the game when a bolt catches one and pins it to a wall.
 
 ## Look
-- **Proportions:** about 2.5 heads tall, ~1.1 m. The head (a bucket helmet like the driver's,
+- **Proportions:** about 2.5 heads tall, ~1.5 m: the helmet is the tank driver's size. The head (a bucket helmet like the driver's,
   with a face slot) is as big as the whole torso. Stubby legs, short arms, mitten hands.
 - **Same family as the tank driver** (`tools/parts/knight.py`): steel bucket helmet, team tunic,
   iron pauldrons, brown gloves and boots. Team colour on the tunic, a helmet plume and a small
@@ -75,14 +75,16 @@ Smart UV, the Cycles bake of the tank's STYLES and its material keys (so `TankMo
 as is), glb export. The tank build skips `troop_*` and is unchanged.
 
 - `tools/parts/troop_dims.py`: the skeleton, the single source. Troop space has its origin at the
-  pelvis (hip centre), x right, y up, -z forward. The helmet top is 1.07 m above the soles, the
-  spear tip 1.47 m. Right-side joints only; the left mirrors them.
+  pelvis (hip centre), x right, y up, -z forward. Its numbers are the model's; `SCALE` (0.31 / 0.22,
+  the driver's helmet radius over the model's) scales the built troop so its helmet matches the
+  driver's: the helmet top is 1.51 m above the soles, the spear tip 2.07 m. Right-side joints only;
+  the left mirrors them.
 - `troop_head.py` (the knight's bucket helmet a size down: face slot, big eyes with a highlight,
   rosy cheeks, visor slits, side bosses, plume socket), `troop_body.py` (torso: tunic, iron collar,
   pauldrons; pelvis: skirt, belt and buckle, gunmetal hose), `troop_limbs.py` (team sleeve; iron
   vambrace with a big brown mitten; gunmetal thigh; knee cop, shin and boot), `troop_kit.py`
   (shield, spear, plume), `troop_common.py` (limb lathe; `piece()` moves a piece's origin onto its
-  joint before the bake). Each module exposes `PIECES = {name: build}`.
+  joint and scales it by `SCALE`, bevels included, before the bake). Each module exposes `PIECES = {name: build}`.
 - Pieces: `pelvis`, `torso`, `head`, `plume`, `upper_arm_l/r`, `forearm_l/r`, `thigh_l/r`,
   `shin_l/r`, `shield` (on `forearm_l`), `spear` (on `forearm_r`). Each glb's origin is at its
   joint with its parent, unrotated in the rest pose: standing, arms hanging a little out from the
@@ -90,15 +92,17 @@ as is), glb export. The tank build skips `troop_*` and is unchanged.
   forward and out. Left and right are modelled separately (no negative scale anywhere).
 - `assets/troop/dims.json` follows the schema `scripts/troops/troop.gd` reads. Per piece:
   `parent`; `joint`, the origin in the parent's space (the pelvis's is measured from the troop
-  origin on the ground, y 0.34); `rest`, the same point relative to the pelvis origin; `box` and
-  `center`, a collision box in the piece's own space; `mass` in kg (head 3.0, torso 2.5, 13 kg
-  in all). At rest no two boxes overlap unless their pieces are joined.
+  origin on the ground, y 0.48); `rest`, the same point relative to the pelvis origin; `box` and
+  `center`, a collision box in the piece's own space; `mass` in kg (head 8.4, torso 7.0, 36.5 kg
+  in all: the model's masses times SCALE cubed). At rest no two boxes overlap unless their pieces
+  are joined.
 - Team colour: the tunic, sleeves, plume and shield face use the `team` material, baked pale and
   tinted in Godot as on the tank.
-- Previews: `build/previews/troop_{front,side,back,three_quarter}.png` and `troop_sheet.png`.
+- Previews: `build/previews/troop_{front,side,back,three_quarter,with_knight}.png` (the last beside
+  the tank's driver, helmets level) and all five in `troop_sheet.png`.
 
 ## Troop gameplay (as built, 2026-10-26)
-- **`Troop`** (`scripts/troops/troop.gd`): a `CharacterBody3D` capsule (0.25 x 1.1 m, layer 4,
+- **`Troop`** (`scripts/troops/troop.gd`): a `CharacterBody3D` capsule (0.35 x 1.55 m, layer 4,
   collides with the world only) carrying the pieces on pivots at their joints, loaded from
   `assets/troop/<piece>.glb` and `dims.json` (coloured boxes with the same names when missing).
   Runs at 3.6 m/s where `move_dir` points, on floors up to 40 degrees. The run cycle is code: hips

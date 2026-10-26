@@ -1,7 +1,8 @@
 """Render the assembled troop for a look, with preview.py's studio (same lights, grey world,
 Cycles): the pieces from assets/troop/ placed at their rest positions from assets/troop/dims.json, seen
-front, side (from its right), back (orthographic) and front-left three-quarter (perspective).
-Writes build/previews/troop_<view>.png and the four side by side, build/previews/troop_sheet.png.
+front, side (from its right), back (orthographic) and front-left three-quarter (perspective), and
+from the front beside the tank's driver (assets/tank/knight.glb, helmets level: they should match).
+Writes build/previews/troop_<view>.png and all five side by side, build/previews/troop_sheet.png.
 
     blender -b --factory-startup --python tools/parts/troop_preview.py
 """
@@ -9,10 +10,15 @@ Writes build/previews/troop_<view>.png and the four side by side, build/previews
 import json
 import math
 import os
+import sys
 
 import bpy
 import numpy as np
 from mathutils import Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import dims  # noqa: E402  (the knight's helmet)
+import troop_dims  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, "assets", "troop")
@@ -73,24 +79,14 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     panels = []
     for view, (direction, ortho) in VIEWS.items():
-        direction = Vector(direction).normalized()
-        if ortho:
-            cam.data.type = "ORTHO"
-            cam.data.ortho_scale = span
-            cam.location = centre + direction * 5
-        else:
-            cam.data.type = "PERSP"
-            cam.data.lens = 50
-            cam.location = centre + direction * (span / 2 / math.tan(math.atan(18 / 50)) * 1.05)
-        cam.rotation_euler = (centre - cam.location).to_track_quat("-Z", "Y").to_euler()
-        path = os.path.join(OUT, "troop_%s.png" % view)
-        bpy.context.scene.render.filepath = path
-        bpy.ops.render.render(write_still=True)
-        print("PREVIEW", path)
-        img = bpy.data.images.load(path)
-        px = np.empty(W * H * 4, dtype=np.float32)
-        img.pixels.foreach_get(px)
-        panels.append(px.reshape(H, W, 4))
+        panels.append(shot(cam, view, direction, ortho, centre, span, W))
+    # Beside the knight: its helmet bottom level with the troop's, to the troop's right.
+    bpy.ops.import_scene.gltf(filepath=os.path.join(ROOT, "assets", "tank", "knight.glb"))
+    knight = [o for o in bpy.context.scene.objects if o.parent is None and o.name.startswith("knight")][0]
+    k = dims.KNIGHT
+    dy = troop_dims.HELMET_Y[0] * troop_dims.SCALE - dims.HELMET_Y[0]
+    knight.location = Vector((0.9 - k["x"], k["z"], dy))     # Godot (x, y, z) -> Blender (x, -z, y)
+    panels.append(shot(cam, "with_knight", VIEWS["front"][0], True, centre + Vector((0.45, 0, 0)), span, W * 3 // 2))
     sheet = np.concatenate(panels, axis=1)
     out = bpy.data.images.new("troop_sheet", sheet.shape[1], sheet.shape[0], alpha=False)
     out.pixels.foreach_set(sheet.ravel())
@@ -98,6 +94,30 @@ def main():
     out.file_format = "PNG"
     out.save()
     print("PREVIEW", out.filepath_raw)
+
+
+def shot(cam, view, direction, ortho, centre, span, width):
+    """Render one view to build/previews/troop_<view>.png; returns its pixels (H x width)."""
+    sc = bpy.context.scene
+    sc.render.resolution_x = width
+    direction = Vector(direction).normalized()
+    if ortho:
+        cam.data.type = "ORTHO"
+        cam.data.ortho_scale = span * max(width, H) / H    # the scale spans the longer side
+        cam.location = centre + direction * 5
+    else:
+        cam.data.type = "PERSP"
+        cam.data.lens = 50
+        cam.location = centre + direction * (span / 2 / math.tan(math.atan(18 / 50)) * 1.05)
+    cam.rotation_euler = (centre - cam.location).to_track_quat("-Z", "Y").to_euler()
+    path = os.path.join(OUT, "troop_%s.png" % view)
+    sc.render.filepath = path
+    bpy.ops.render.render(write_still=True)
+    print("PREVIEW", path)
+    img = bpy.data.images.load(path)
+    px = np.empty(width * H * 4, dtype=np.float32)
+    img.pixels.foreach_get(px)
+    return px.reshape(H, width, 4)
 
 
 if __name__ == "__main__":
