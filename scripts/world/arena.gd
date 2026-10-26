@@ -133,28 +133,46 @@ func _roof(xform: Transform3D, radius: float, height: float, mat: Material) -> v
 
 const FIELD := Vector2(200, 280)   # x, z
 const CASTLE_Z := 70.0
+const DRUM := Vector3(16, 21, 16)   # the corner drums: inner radius, outer radius, height
+const SKY_X := 72.0                 # the sky arches stand along z in the side lanes, at x = +-SKY_X
+
+var spirals: Array = []      ## castles: each tower spiral's world frames
+var arch_roads: Array = []   ## castles: each arch road's world frames (the centre arch's first)
 
 
-## Two castles facing each other across an open field, a giant loop arch in the middle and the
-## high bridge between the gates, all under ordinary downward gravity
-## (docs/design/castle-skatepark.md).
+## Two castles in moats facing each other across an open field, a giant loop arch in the middle
+## with a road over its crown, the high bridge between the gates, two absurd sky arches carrying
+## roads down the side lanes, kickers, and a wall-of-death drum in each corner, all under ordinary
+## downward gravity (docs/design/castle-skatepark.md). Mirrored by a half turn.
 func build_castles() -> void:
 	field.uniform = Vector3.DOWN
-	Geo.box(self, Vector3(FIELD.x, 2, FIELD.y), Transform3D(Basis.IDENTITY, Vector3(0, -1, 0)), Look.road())
-	CastleKit.castle(self, Vector3(0, 0, -CASTLE_Z), 1.0, 0)
-	CastleKit.castle(self, Vector3(0, 0, CASTLE_Z), -1.0, 1)
+	var holes := []
+	for c in [CastleKit.castle(self, Vector3(0, 0, -CASTLE_Z), 1.0, 0), CastleKit.castle(self, Vector3(0, 0, CASTLE_Z), -1.0, 1)]:
+		holes.append_array(c.holes)
+		spirals.append_array(c.spirals)
+	_ground(holes)
 	CastleKit.arch(self, Transform3D.IDENTITY, 26.0, 36.0, 6.0, 12.0)
+	arch_roads.append(CastleKit.arch_road(self, Transform3D.IDENTITY, 26.0, 36.0, 25.0, [16.0, 28.0, 40.0, 52.0, 64.0, 76.0]))
+	for s in [-1.0, 1.0]:   # spans along z; piers clear of the bastions' run-ups at |z| ~ 64
+		var xf := Transform3D(Basis(Vector3.UP, s * PI * 0.5), Vector3(s * SKY_X, 0, 0))
+		CastleKit.arch(self, xf, 40.0, 50.0, 6.0, 12.0)
+		arch_roads.append(CastleKit.arch_road(self, xf, 40.0, 50.0, 25.0, [24.0, 36.0, 52.0, 76.0, 88.0, 100.0]))
 	var gate_z := CASTLE_Z - 30.0 + CastleKit.WALL_W * 0.5 - 1.5   # overlaps the outer copings
-	CastleKit.bridge(self, -gate_z, gate_z, [-25.0, -10.0, 10.0, 25.0], [[20.0, 1.0], [-20.0, -1.0]])
+	CastleKit.bridge(self, -gate_z, gate_z, [-25.0, -10.0, 10.0, 25.0], [[10.0, 1.0], [-10.0, -1.0]], 7.0)
+	# Kickers that air you onto the bridge deck from beside it.
+	var kick_l := CastleKit.KICK_R * sin(deg_to_rad(CastleKit.KICK_DEG))
+	for s in [-1.0, 1.0]:
+		CastleKit.kicker(self, Transform3D(Basis(Vector3.UP, -s * PI * 0.5), Vector3(s * (18.0 + kick_l), 0, -s * 10.0)), 6.0)
 	# The edge of the world: a skatepark wall all round, its inner face to the field, with gaps
-	# every 30 m to ride up onto its walk; the outer battlements are unbroken.
+	# every 30 m to ride up onto its walk; the outer battlements are unbroken. The walls run into
+	# a drum in each corner, its door to the field.
 	var hx := FIELD.x * 0.5
 	var hz := FIELD.y * 0.5
 	for s in [-1.0, 1.0]:
-		CastleKit.wall(self, Transform3D(Basis(Vector3.UP, 0.0 if s < 0.0 else PI), Vector3(0, 0, s * hz)), FIELD.x, [], _gaps(FIELD.x))
-		CastleKit.wall(self, Transform3D(Basis(Vector3.UP, -s * PI * 0.5), Vector3(s * hx, 0, 0)), FIELD.y, [], _gaps(FIELD.y))
+		CastleKit.wall(self, Transform3D(Basis(Vector3.UP, 0.0 if s < 0.0 else PI), Vector3(0, 0, s * hz)), FIELD.x - 2.0 * DRUM.x, [], _gaps(FIELD.x - 2.0 * DRUM.x))
+		CastleKit.wall(self, Transform3D(Basis(Vector3.UP, -s * PI * 0.5), Vector3(s * hx, 0, 0)), FIELD.y - 2.0 * DRUM.x, [], _gaps(FIELD.y - 2.0 * DRUM.x))
 		for t in [-1.0, 1.0]:
-			CastleKit.tower(self, Transform3D(Basis.IDENTITY, Vector3(s * hx, 0, t * hz)))
+			CastleKit.drum(self, Transform3D(Basis.IDENTITY, Vector3(s * hx, 0, t * hz)), DRUM.x, DRUM.y, DRUM.z, atan2(-t, -s))
 	player_spawn = _ground_spawn(Vector3(0, 0, -50), 0.0)   # in castle A's courtyard, facing the gate
 	dummy_spawns = [_ground_spawn(Vector3(0, 0, 50), 180.0), _ground_spawn(Vector3(45, 0, 0), 90.0),
 			_ground_spawn(Vector3(-45, 0, 10), -90.0)]
@@ -169,6 +187,40 @@ func _gaps(length: float) -> Array:
 			out.append([-x - 4.0, -x + 4.0])
 		x += 30.0
 	return out
+
+
+## The field's floor, a slab 2 m deep, open where the moats dig in (holes: Rect2s in x, z): cut
+## into a grid on the holes' edges, rows of cells outside every hole merged into boxes.
+func _ground(holes: Array) -> void:
+	var xs := [-FIELD.x * 0.5, FIELD.x * 0.5]
+	var zs := [-FIELD.y * 0.5, FIELD.y * 0.5]
+	for h: Rect2 in holes:
+		xs.append_array([h.position.x, h.end.x])
+		zs.append_array([h.position.y, h.end.y])
+	xs.sort()
+	zs.sort()
+	var slab := func(x0: float, x1: float, z0: float, z1: float) -> void:
+		Geo.box(self, Vector3(x1 - x0, 2, z1 - z0), Transform3D(Basis.IDENTITY, Vector3((x0 + x1) * 0.5, -1, (z0 + z1) * 0.5)), Look.road())
+	for j in zs.size() - 1:
+		var z0: float = zs[j]
+		var z1: float = zs[j + 1]
+		if z1 - z0 < 0.01:
+			continue
+		var run := [NAN, NAN]   # the open stretch so far, x0..x1
+		for i in xs.size() - 1:
+			var x0: float = xs[i]
+			var x1: float = xs[i + 1]
+			if x1 - x0 < 0.01:
+				continue
+			var c := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
+			if holes.any(func(h: Rect2) -> bool: return h.has_point(c)):
+				if not is_nan(run[0]):
+					slab.call(run[0], run[1], z0, z1)
+				run = [NAN, NAN]
+			else:
+				run = [x0 if is_nan(run[0]) else run[0], x1]
+		if not is_nan(run[0]):
+			slab.call(run[0], run[1], z0, z1)
 
 
 ## Standing on flat ground at p, nose toward +z turned by yaw.

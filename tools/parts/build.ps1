@@ -1,6 +1,7 @@
 # build.ps1 - build tank parts in headless Blender into assets/tank/<part>.glb.
 #   .\tools\parts\build.ps1               # every part
 #   .\tools\parts\build.ps1 road_wheel    # just these
+#   .\tools\parts\build.ps1 troop         # the foot troop into assets/troop/ (troop head shield: just these)
 .  "$PSScriptRoot\..\..\godot_env.ps1"
 $blender = Resolve-BtBlender
 & $blender -b --factory-startup --python "$PSScriptRoot\build.py" -- @args 2>&1 |

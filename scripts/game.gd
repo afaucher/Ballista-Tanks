@@ -6,13 +6,24 @@ extends Node3D
 ##   --arena castles|starter|roads   --seed N   --bolt straight|down
 ##   --bot                   the player's tank drives itself (follows the road in roads mode) and
 ##                           shoots at enemies ahead; --demo puts an enemy just up the road
-##   --view chase|overview   --shot-dir DIR --shot-times 1.5,4   save screenshots, then quit
+##   --view chase|overview|troops|pin   --shot-dir DIR --shot-times 1.5,4   save screenshots, then quit
+##   --pin-demo              (castles) a bolt pins a troop to a bridge pier at 1 s; --view pin watches
 
 const CAM_HEIGHT := 2.4      # pivot above the tank's origin
 const CAM_BACK := 5.6
 const CAM_LIFT := 1.4
 const MOUSE_SENS := 0.0025
 const ARENAS := ["castles", "roads", "starter"]   # M cycles through them
+# Foot troops in the castle skatepark: [team, where, how many]. A squad in each courtyard and two
+# on each half of the field, all marching on the enemy gate; a team down to few troops gets a
+# fresh squad from its courtyard.
+const SQUADS := [
+	[0, Vector3(12, 0, -60), 5], [0, Vector3(-20, 0, -12), 4], [0, Vector3(22, 0, -18), 4],
+	[1, Vector3(-12, 0, 60), 5], [1, Vector3(20, 0, 12), 4], [1, Vector3(-22, 0, 18), 4],
+]
+const GATE_Z := Arena.CASTLE_Z - 34.0   # a point in each castle's gate tunnel
+const REINFORCE_BELOW := 6
+const REINFORCE_EVERY := 15.0
 
 var arena: Arena
 var player: Tank
@@ -35,6 +46,8 @@ var _shot_dir := ""
 var _shot_times: Array[float] = []
 var _clock := 0.0
 var _world: Node3D
+var _pin_demo := false
+var _reinforce_t := 0.0
 
 
 func _ready() -> void:
@@ -46,6 +59,7 @@ func _ready() -> void:
 		Bolt.mode = Bolt.Mode.STRAIGHT
 	_bot = args.has("bot")
 	_demo = args.has("demo")
+	_pin_demo = args.has("pin-demo")
 	_view = args.get("view", "chase")
 	_shot_dir = args.get("shot-dir", "")
 	for t in String(args.get("shot-times", "")).split(",", false):
@@ -93,6 +107,7 @@ func _build() -> void:
 	if arena_kind == "castles":
 		Look.make_outdoor(_world)
 		arena.build_castles()
+		_spawn_troops()
 	else:
 		_world.add_child(Look.make_environment())
 		Look.make_sun(_world, Arena.HALF)
@@ -125,6 +140,42 @@ func _build() -> void:
 	_aim = player.forward
 	_cam_up = player.up
 	hits = 0
+
+
+func _spawn_troops() -> void:
+	TroopAI.bake_nav(arena)
+	for s in SQUADS:
+		_squad(s[0], s[1], s[2])
+	if _pin_demo:   # a lone red troop by a bridge pier; a bolt comes at 1 s
+		var t := Troop.new(1)
+		_world.add_child(t)
+		t.global_position = Vector3(8.5, 0.05, -25)
+		t.facing = Vector3.RIGHT
+		get_tree().create_timer(1.0, false, true).timeout.connect(func() -> void:
+			var bolt := Bolt.new()
+			bolt.setup(null, Vector3(11.5, 0.25, -25), Vector3(-60, 11, 0), Vector3.ZERO)
+			_world.add_child(bolt))
+
+
+func _squad(team: int, at: Vector3, count: int) -> TroopAI:
+	return TroopAI.spawn(_world, team, at, Vector3(0, 0, GATE_Z * (1.0 if team == 0 else -1.0)), count)
+
+
+## A team whose troops are thinning out gets a fresh squad from its courtyard.
+func _reinforce(dt: float) -> void:
+	if arena_kind != "castles":
+		return
+	_reinforce_t += dt
+	if _reinforce_t < REINFORCE_EVERY:
+		return
+	_reinforce_t = 0.0
+	var count := [0, 0]
+	for t: Troop in get_tree().get_nodes_in_group("troops"):
+		if t.alive:
+			count[t.team] += 1
+	for team in 2:
+		if count[team] < REINFORCE_BELOW:
+			_squad(team, SQUADS[team * 3][1], SQUADS[team * 3][2])
 
 
 func _spawn(team: int, xform: Transform3D) -> Tank:
@@ -218,7 +269,13 @@ func _physics_process(dt: float) -> void:
 		target_up = (target_up + player.forward * 0.5).normalized()
 	_cam_up = Tank.turn_toward(_cam_up, target_up, 1.0 - exp(-6.0 * dt))
 
-	if _view == "overview" and arena_kind == "castles":
+	if _view == "troops" and arena_kind == "castles":   # the blue gate: squads marching out
+		cam.global_position = Vector3(2.6, 1.8, -27.5)
+		cam.look_at(Vector3(-0.5, 0.7, -37), Vector3.UP)
+	elif _view == "pin" and arena_kind == "castles":   # the --pin-demo pier
+		cam.global_position = Vector3(10.5, 2.0, -20.5)
+		cam.look_at(Vector3(5.5, 1.1, -25), Vector3.UP)
+	elif _view == "overview" and arena_kind == "castles":
 		cam.global_position = Vector3(95, 60, -115)
 		cam.look_at(Vector3(0, 6, -10), Vector3.UP)
 	elif _view == "overview":
@@ -255,6 +312,7 @@ func _physics_process(dt: float) -> void:
 	hud.impact_hit = pred.hit
 
 	_score()
+	_reinforce(dt)
 	_shots()
 
 

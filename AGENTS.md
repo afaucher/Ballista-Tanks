@@ -16,7 +16,10 @@ remain as alternates (M cycles them in game).
   `road_gen.gd` (road-first generator), `gravity_field.gd` (airborne gravity), `geo.gd` (mesh
   builders), `look.gd` + `shaders/` (materials, light), `pad.gd` (launch/boost pads)
 - `scripts/tank/`: `tank.gd` (driving, surface gravity, ballista), `tank_model.gd` (the look)
-- `scripts/combat/bolt.gd`: bolts, both gravity modes; `scripts/game.gd`: camera, input, HUD
+- `scripts/combat/bolt.gd`: bolts, both gravity modes, carrying and pinning troops; `scripts/game.gd`:
+  camera, input, HUD, troop squads in the castles
+- `scripts/troops/` (`docs/design/troops.md`): `troop.gd` (capsule + rigid pieces, procedural run),
+  `troop_ai.gd` (squads, runtime navigation bake), `troop_ragdoll.gd` (death ragdoll, joint projection)
 - `scenes/main.tscn` boots the game, or a test with `-- --run-test <name>`; `*_lab.tscn` are labs
 
 ## Run and test

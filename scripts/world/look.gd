@@ -163,13 +163,20 @@ static func make_outdoor(parent: Node3D) -> void:
 	we.name = "Environment"
 	we.environment = env
 	parent.add_child(we)
-	var meadow := MeshInstance3D.new()   # beyond the arena walls, out to the haze; never driven on
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(2400, 2400)
-	meadow.mesh = plane
-	meadow.material_override = _plain(Color(0.42, 0.52, 0.3), 0.0, 0.95)
-	meadow.position.y = -0.05
-	parent.add_child(meadow)
+	# The meadow beyond the arena walls, out to the haze; never driven on. A frame round the field,
+	# so it doesn't cover the moats dug into the field.
+	var grass := _plain(Color(0.42, 0.52, 0.3), 0.0, 0.95)
+	var far := 1200.0
+	var hole := Arena.FIELD * 0.5
+	for piece in [Rect2(-far, -far, 2.0 * far, far - hole.y), Rect2(-far, hole.y, 2.0 * far, far - hole.y),
+			Rect2(-far, -hole.y, far - hole.x, 2.0 * hole.y), Rect2(hole.x, -hole.y, far - hole.x, 2.0 * hole.y)]:
+		var meadow := MeshInstance3D.new()
+		var plane := PlaneMesh.new()
+		plane.size = piece.size
+		meadow.mesh = plane
+		meadow.material_override = grass
+		meadow.position = Vector3(piece.get_center().x, -0.05, piece.get_center().y)
+		parent.add_child(meadow)
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
 	sun.light_color = WARM_LIGHT

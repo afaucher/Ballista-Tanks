@@ -1,0 +1,344 @@
+{
+  "_doc": "Troop pieces: assets/troop/<name>.glb, origin at the joint, +Y up, -Z forward, metres. joint: the origin in the parent's space (the pelvis's from the troop origin on the ground); rest: the origin in the standing rest pose relative to the pelvis origin (the hip centre); box, center: rough collision box size and centre, relative to the piece's origin; mass in kg. Surfaces with material \"team\" take the team colour.",
+  "ground_y": -0.34,
+  "height": 1.07,
+  "team_material": "team",
+  "pieces": {
+    "pelvis": {
+      "parent": "",
+      "joint": [
+        0.0,
+        0.34,
+        0.0
+      ],
+      "rest": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "box": [
+        0.28,
+        0.17,
+        0.28
+      ],
+      "center": [
+        0.0,
+        -0.005,
+        0.0
+      ],
+      "mass": 1.5
+    },
+    "torso": {
+      "parent": "pelvis",
+      "joint": [
+        0.0,
+        0.06,
+        0.0
+      ],
+      "rest": [
+        0.0,
+        0.06,
+        0.0
+      ],
+      "box": [
+        0.31,
+        0.27,
+        0.27
+      ],
+      "center": [
+        0.0,
+        0.11,
+        0.0
+      ],
+      "mass": 2.5
+    },
+    "head": {
+      "parent": "torso",
+      "joint": [
+        0.0,
+        0.24,
+        0.0
+      ],
+      "rest": [
+        0.0,
+        0.3,
+        0.0
+      ],
+      "box": [
+        0.44,
+        0.49,
+        0.44
+      ],
+      "center": [
+        0.0,
+        0.21,
+        -0.01
+      ],
+      "mass": 3.0
+    },
+    "plume": {
+      "parent": "head",
+      "joint": [
+        0.0,
+        0.465,
+        0.0
+      ],
+      "rest": [
+        0.0,
+        0.765,
+        0.0
+      ],
+      "box": [
+        0.09,
+        0.22,
+        0.32
+      ],
+      "center": [
+        0.0,
+        0.1,
+        0.125
+      ],
+      "mass": 0.05
+    },
+    "upper_arm_r": {
+      "parent": "torso",
+      "joint": [
+        0.175,
+        0.185,
+        0.0
+      ],
+      "rest": [
+        0.175,
+        0.245,
+        0.0
+      ],
+      "box": [
+        0.09,
+        0.15,
+        0.09
+      ],
+      "center": [
+        0.0235,
+        -0.055,
+        0.0
+      ],
+      "mass": 0.4
+    },
+    "forearm_r": {
+      "parent": "upper_arm_r",
+      "joint": [
+        0.047,
+        -0.11,
+        0.0
+      ],
+      "rest": [
+        0.222,
+        0.135,
+        0.0
+      ],
+      "box": [
+        0.09,
+        0.19,
+        0.13
+      ],
+      "center": [
+        0.024,
+        -0.0525,
+        -0.0175
+      ],
+      "mass": 0.4
+    },
+    "upper_arm_l": {
+      "parent": "torso",
+      "joint": [
+        -0.175,
+        0.185,
+        0.0
+      ],
+      "rest": [
+        -0.175,
+        0.245,
+        0.0
+      ],
+      "box": [
+        0.09,
+        0.15,
+        0.09
+      ],
+      "center": [
+        -0.0235,
+        -0.055,
+        0.0
+      ],
+      "mass": 0.4
+    },
+    "forearm_l": {
+      "parent": "upper_arm_l",
+      "joint": [
+        -0.047,
+        -0.11,
+        0.0
+      ],
+      "rest": [
+        -0.222,
+        0.135,
+        0.0
+      ],
+      "box": [
+        0.09,
+        0.19,
+        0.13
+      ],
+      "center": [
+        -0.024,
+        -0.0525,
+        -0.0175
+      ],
+      "mass": 0.4
+    },
+    "thigh_r": {
+      "parent": "pelvis",
+      "joint": [
+        0.075,
+        0.0,
+        0.0
+      ],
+      "rest": [
+        0.075,
+        0.0,
+        0.0
+      ],
+      "box": [
+        0.11,
+        0.18,
+        0.11
+      ],
+      "center": [
+        0.0,
+        -0.065,
+        0.0
+      ],
+      "mass": 0.9
+    },
+    "shin_r": {
+      "parent": "thigh_r",
+      "joint": [
+        0.0,
+        -0.15,
+        0.0
+      ],
+      "rest": [
+        0.075,
+        -0.15,
+        0.0
+      ],
+      "box": [
+        0.11,
+        0.2,
+        0.17
+      ],
+      "center": [
+        0.0,
+        -0.095,
+        -0.02
+      ],
+      "mass": 0.8
+    },
+    "thigh_l": {
+      "parent": "pelvis",
+      "joint": [
+        -0.075,
+        0.0,
+        0.0
+      ],
+      "rest": [
+        -0.075,
+        0.0,
+        0.0
+      ],
+      "box": [
+        0.11,
+        0.18,
+        0.11
+      ],
+      "center": [
+        0.0,
+        -0.065,
+        0.0
+      ],
+      "mass": 0.9
+    },
+    "shin_l": {
+      "parent": "thigh_l",
+      "joint": [
+        0.0,
+        -0.15,
+        0.0
+      ],
+      "rest": [
+        -0.075,
+        -0.15,
+        0.0
+      ],
+      "box": [
+        0.11,
+        0.2,
+        0.17
+      ],
+      "center": [
+        0.0,
+        -0.095,
+        -0.02
+      ],
+      "mass": 0.8
+    },
+    "shield": {
+      "parent": "forearm_l",
+      "joint": [
+        -0.048,
+        -0.105,
+        -0.035
+      ],
+      "rest": [
+        -0.27,
+        0.03,
+        -0.035
+      ],
+      "box": [
+        0.18,
+        0.24,
+        0.12
+      ],
+      "center": [
+        -0.036,
+        -0.04,
+        -0.048
+      ],
+      "mass": 0.5
+    },
+    "spear": {
+      "parent": "forearm_r",
+      "joint": [
+        0.048,
+        -0.105,
+        -0.035
+      ],
+      "rest": [
+        0.27,
+        0.03,
+        -0.035
+      ],
+      "box": [
+        0.05,
+        1.46,
+        0.05
+      ],
+      "center": [
+        0.0,
+        0.37,
+        0.0
+      ],
+      "mass": 0.5
+    }
+  }
+}

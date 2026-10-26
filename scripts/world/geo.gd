@@ -245,6 +245,65 @@ static func arc(c: Vector2, r: float, a0: float, a1: float, n := 10) -> PackedVe
 	return out
 
 
+## A closed side profile [(r, y)] (either winding) turned about +Y from angle a0 to a1 (radians,
+## a point at angle a is (r cos a, y, r sin a)), with end caps unless it goes all the way round.
+## Normals are smooth across bends gentler than smooth_deg, as in extrude().
+static func lathe(profile: PackedVector2Array, a0: float, a1: float, segments: int, smooth_deg := 30.0) -> ArrayMesh:
+	var n := profile.size()
+	var area := 0.0
+	for i in n:
+		area += profile[i].x * profile[(i + 1) % n].y - profile[(i + 1) % n].x * profile[i].y
+	var edge_n: Array[Vector2] = []
+	for i in n:
+		var d := (profile[(i + 1) % n] - profile[i]).normalized()
+		edge_n.append(Vector2(d.y, -d.x) if area > 0.0 else Vector2(-d.y, d.x))   # outward, in (r, y)
+	var cos_smooth := cos(deg_to_rad(smooth_deg))
+	var at := func(p: Vector2, a: float) -> Vector3: return Vector3(p.x * cos(a), p.y, p.x * sin(a))
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for s in segments:
+		var t0 := lerpf(a0, a1, float(s) / segments)
+		var t1 := lerpf(a0, a1, float(s + 1) / segments)
+		for i in n:
+			var j := (i + 1) % n
+			var prev := edge_n[(i - 1 + n) % n]
+			var next := edge_n[j]
+			var na := (edge_n[i] + prev).normalized() if edge_n[i].dot(prev) > cos_smooth else edge_n[i]
+			var nb := (edge_n[i] + next).normalized() if edge_n[i].dot(next) > cos_smooth else edge_n[i]
+			_quad_n(st, [at.call(profile[i], t0), at.call(profile[i], t1), at.call(profile[j], t1), at.call(profile[j], t0)],
+					[at.call(na, t0), at.call(na, t1), at.call(nb, t1), at.call(nb, t0)])
+	if absf(a1 - a0) < TAU - 0.001:
+		var tris := Geometry2D.triangulate_polygon(profile)
+		for k in range(0, tris.size(), 3):
+			var p := [profile[tris[k]], profile[tris[k + 1]], profile[tris[k + 2]]]
+			_tri(st, at.call(p[0], a0), at.call(p[1], a0), at.call(p[2], a0), Vector3(sin(a0), 0, -cos(a0)))
+			_tri(st, at.call(p[0], a1), at.call(p[1], a1), at.call(p[2], a1), Vector3(-sin(a1), 0, cos(a1)))
+	return st.commit()
+
+
+## A plain deck swept along frames ({pos, up, tan}, pos on the top surface): road() without rails.
+static func deck(frames: Array, width: float, thickness: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hw := width * 0.5
+	for i in frames.size() - 1:
+		var f0: Dictionary = frames[i]
+		var f1: Dictionary = frames[i + 1]
+		var s0: Vector3 = f0.tan.cross(f0.up).normalized()
+		var s1: Vector3 = f1.tan.cross(f1.up).normalized()
+		var u0: Vector3 = f0.up
+		var u1: Vector3 = f1.up
+		var tl0: Vector3 = f0.pos - s0 * hw
+		var tr0: Vector3 = f0.pos + s0 * hw
+		var tl1: Vector3 = f1.pos - s1 * hw
+		var tr1: Vector3 = f1.pos + s1 * hw
+		_quad_n(st, [tl0, tr0, tr1, tl1], [u0, u0, u1, u1])
+		_quad_n(st, [tl0 - u0 * thickness, tr0 - u0 * thickness, tr1 - u1 * thickness, tl1 - u1 * thickness], [-u0, -u0, -u1, -u1])
+		_quad_n(st, [tl0 - u0 * thickness, tl1 - u1 * thickness, tl1, tl0], [-s0, -s1, -s1, -s0])
+		_quad_n(st, [tr0 - u0 * thickness, tr1 - u1 * thickness, tr1, tr0], [s0, s1, s1, s0])
+	return st.commit()
+
+
 # --- Triangles -------------------------------------------------------------------------------
 
 static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, n: Vector3) -> void:

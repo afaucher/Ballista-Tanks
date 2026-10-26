@@ -92,10 +92,39 @@ a clearance test checks every road joins up.
 - **Layout** (`Arena.build_castles`): a 200 x 280 m field ringed by a skatepark wall (gaps every 30 m
   on its inner battlements to ride up onto its walk), castles 60 m square centred 70 m either side
   of the arch, mirrored by a half turn. Outdoor light: sky, a warm sun with shadows, haze.
+- **Moat bowls** (`CastleKit.moat`): 4 m deep, outside every wall. Where a wall has a moat its outer
+  quarter-pipe carries on down into it as one 10 m curve (vertical at the same 6 m), so the moat's
+  inner bank is the wall: carve down the outer bank (a 6 m concave, then a 3 m convex lip), across
+  a 2 m floor and straight up onto the walk. Each moat ends in 4 m quarter-pipes with a vertical lip
+  at field level. The gate's causeway (10 m, plain ground) splits the front moat; the corners stay
+  ground, for the spirals. The field slab is built round the moats (`Arena._ground`).
+- **Tower spirals** (`CastleKit.spiral`): round every corner tower (now 20 m high). Each starts on its
+  corner's ground with a 20 m straight run-up off the outer diagonal, climbs to walk height as it
+  bridges the end of a moat, runs level across both walls' walks (and over the courtyard corner, so
+  it also joins the two walks), then climbs again outside, tightening onto the tower, and arrives
+  level with its top (a gap in the tower's merlons; the team roof now sits on a turret). Railed
+  while it climbs, open where it crosses the walks; carried on beams from the tower. The walls'
+  battlements open where it crosses, 10-20 m out from the middle of each side.
+- **Kickers** (`CastleKit.kicker`, a 16 m curve to a 50 degree lip, 5.7 m high): a bastion in each
+  castle's right moat that airs a flat-out tank over the moat onto the wall walk through a drop-in
+  gap, and one beside the bridge on each half that airs you onto the deck (needs about 25 m/s).
+- **Arch roads** (`CastleKit.arch_road`): a 10 m crenellated road rides the giant arch's back over the
+  crown (37 m) and runs straight down at 25 degrees to the ground at x = +-84, on piers. Two sky arches
+  (80 m span, 50 m high, also rideable inside as loops) stand along z in the side lanes at x = +-72,
+  their roads over the crown at 51 m and down to the ground at z = +-117; the centre road passes
+  under them. The bridge's side ramps moved in to z = +-10 (7 m wide) to stay out of the moats.
+- **Wall-of-death drums** (`CastleKit.drum`, `Geo.lathe`): the field's corner towers are now drums
+  16 m inside, 16 m high (a 6 m quarter-pipe floor, a vertical wall, a coping), the boundary walls
+  running into them, each with an 8 x 7 m door to the field. Ride in, up the quarter-pipe and round
+  the wall above the door, steering to hold a level line.
 - **Tested** (`tests/test_castles.gd`): slow tank can't climb and rolls back, fast tank rides onto
-  the walk, a drop-in comes down and out at 21 m/s, a full-throttle run makes the loop without
-  leaving the surface.
-- Not yet: moat bowls, spiral tower ramps, tower bowls, kickers, roads over the arch crowns.
+  the walk; a drop-in off a side wall comes down through the moat and out onto the field at 17 m/s;
+  from the field a flat-out tank carves through the moat and up its wall onto the walk; a tank
+  following a spiral at 60 % throttle reaches the tower top without leaving it; the bastion and
+  bridge kickers land you on the walk and the deck; the arch road goes over the crown and
+  down the far side without leaving the surface; the loop; once round a drum's wall of death.
+- Not yet: Blender kit pieces; a wall of death inside the castle towers (they're solid: the
+  spirals and walls fill them); drop-ins on the front walls (the spiral crossings took the room).
 
 ## Open questions
 1. Stickiness: momentum-based as proposed, or always stick as now?

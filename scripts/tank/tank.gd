@@ -88,6 +88,7 @@ func _init(p_team := 0) -> void:
 
 
 func _ready() -> void:
+	add_to_group("tanks")   # troops look for tanks to scatter from, and get run over by them
 	collision_layer = 2
 	collision_mask = 1 | 2
 	floor_max_angle = deg_to_rad(55.0)
