@@ -1,0 +1,17 @@
+# Godot
+.godot/
+*.tmp
+# Generated
+test_logs/
+build/
+version.txt
+# Art compare runs (renders, reports); history.csv is kept
+art/compare/runs/
+# Python venv for tools/
+tools/.venv/
+__pycache__/
+*.log
+*.blend1
+# Windows
+desktop.ini
+Thumbs.db

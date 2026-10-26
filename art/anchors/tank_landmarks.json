@@ -1,0 +1,62 @@
+{
+  "_comment": "Pixel positions on tank.jpg (1024x765) of TankModel's LM_* markers (tools/parts/dims.py LANDMARKS), for tools/compare.py. The tank faces image-left; the visible track is its LEFT track. pose: the concept's ballista pose (yaw deg, pitch deg, draw) for tools/compare.py; a 0-9 degree sweep fits best at 6 degrees up.",
+  "points": {
+    "bolt_tip": [
+      158,
+      418
+    ],
+    "bow_tip_r": [
+      185,
+      232
+    ],
+    "bow_tip_l": [
+      733,
+      405
+    ],
+    "helmet_top": [
+      648,
+      130
+    ],
+    "flag_tip": [
+      770,
+      63
+    ],
+    "track_front_l": [
+      488,
+      640
+    ],
+    "track_rear_l": [
+      808,
+      470
+    ],
+    "track_front_r": [
+      245,
+      530
+    ],
+    "bumper_r": [
+      320,
+      545
+    ],
+    "bumper_l": [
+      478,
+      625
+    ],
+    "wheel_front_l": [
+      610,
+      607
+    ],
+    "wheel_rear_l": [
+      767,
+      517
+    ],
+    "gear_center": [
+      541,
+      325
+    ],
+    "stub_end": [
+      803,
+      358
+    ]
+  },
+  "pose": "0,6,0"
+}

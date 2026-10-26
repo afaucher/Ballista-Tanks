@@ -1,0 +1,66 @@
+# test_runner.ps1 - run headless Godot tests from tests/<name>.gd (same shape as Cast's).
+#
+#   .\test_runner.ps1 -TestName test_gravity_field   # one test
+#   .\test_runner.ps1 -TestAll                       # every tests\test_*.gd, in parallel
+#   .\test_runner.ps1 -TestAll -NoImport             # skip the import pass
+#
+# Logs: test_logs\<name>.log / .err.log. A test passes only with exit code 0, the
+# ">>> [TEST PASSED] <name> <<<" marker, AND no "SCRIPT ERROR" in its output.
+param(
+    [string]$TestName = "",
+    [switch]$TestAll,
+    [switch]$NoImport,
+    [int]$TimeoutSec = 180
+)
+. "$PSScriptRoot\godot_env.ps1"
+$godot = Resolve-BtGodot
+$logDir = Join-Path $PSScriptRoot "test_logs"
+New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+
+if (-not $TestAll -and $TestName -eq "") {
+    Write-Host "Usage: .\test_runner.ps1 -TestName <name> | -TestAll" -ForegroundColor Yellow
+    Get-ChildItem "$PSScriptRoot\tests\test_*.gd" | ForEach-Object { Write-Host "  $($_.BaseName)" }
+    exit 1
+}
+if (-not $NoImport) { Invoke-BtImport $godot }
+
+function Start-Test([string]$Name) {
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $godot
+    $psi.Arguments = "--path `"$PSScriptRoot`" --headless --fixed-fps 60 -- --run-test $Name"
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $psi
+    [void]$p.Start()
+    return [PSCustomObject]@{ Name = $Name; Proc = $p; Out = $p.StandardOutput.ReadToEndAsync();
+        Err = $p.StandardError.ReadToEndAsync(); Watch = [Diagnostics.Stopwatch]::StartNew() }
+}
+
+function Finish-Test($r) {
+    $left = [Math]::Max(0, [int](($TimeoutSec - $r.Watch.Elapsed.TotalSeconds) * 1000))
+    if (-not $r.Proc.WaitForExit($left)) { try { $r.Proc.Kill() } catch {}; $r.Proc.WaitForExit() }
+    $out = $r.Out.Result; $err = $r.Err.Result
+    Set-Content -Path "$logDir\$($r.Name).log" -Value $out
+    Set-Content -Path "$logDir\$($r.Name).err.log" -Value $err
+    # A script error inside a coroutine can abort a test silently and still end in a PASS marker.
+    $scriptErr = ($out + "`n" + $err) -match "SCRIPT ERROR"
+    $ok = ($r.Proc.ExitCode -eq 0) -and ($out -match [regex]::Escape(">>> [TEST PASSED] $($r.Name) <<<")) -and (-not $scriptErr)
+    $secs = $r.Watch.Elapsed.TotalSeconds.ToString("F1")
+    if ($ok) { Write-Host "  PASS  $($r.Name)  ($secs s)" -ForegroundColor Green }
+    else {
+        Write-Host "  FAIL  $($r.Name)  ($secs s, exit $($r.Proc.ExitCode))" -ForegroundColor Red
+        ($out + "`n" + $err) -split "`n" | Where-Object { $_ -match "ASSERT FAILED|SCRIPT ERROR|Parse Error|ERROR:|TEST FAILED" } |
+            Select-Object -First 15 | ForEach-Object { Write-Host "        $_" }
+    }
+    return $ok
+}
+
+$names = if ($TestAll) { Get-ChildItem "$PSScriptRoot\tests\test_*.gd" | ForEach-Object { $_.BaseName } } else { @($TestName) }
+$runs = @($names | ForEach-Object { Start-Test $_ })
+$failed = @($runs | Where-Object { -not (Finish-Test $_) })
+Write-Host ""
+if ($failed.Count -eq 0) { Write-Host "All $($runs.Count) test(s) passed." -ForegroundColor Green; exit 0 }
+Write-Host "$($failed.Count) of $($runs.Count) test(s) failed." -ForegroundColor Red
+exit 1
